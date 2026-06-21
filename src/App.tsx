@@ -2,9 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import AdminLayout from './components/AdminLayout';
 import Dashboard from './pages/Dashboard';
 import Services from './pages/Services'; // <-- INI YANG BENER BES!
-
-// Bikin file terpisah juga buat dua ini di folder pages biar makin rapi
-const Barbers = () => <h1 className="text-2xl font-semibold text-gray-800">Manajemen Kapster</h1>;
+import Barbers from './pages/Barbers'; // <-- INI YANG BENER BES!
 
 export default function App() {
   return (
