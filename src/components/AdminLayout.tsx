@@ -4,6 +4,7 @@ import Header from './Header';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
