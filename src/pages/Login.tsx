@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
 
 export default function Login() {
@@ -14,24 +15,30 @@ export default function Login() {
     setErrorMsg('');
 
     try {
-      // Nanti lu bisa ganti ini nembak ke API lu beneran
-      // Contoh: const res = await axios.post('http://localhost:3000/api/auth/login', { email, password });
-      
-      // ⚠️ INI DUMMY LOGIN BUAT TES SEMENTARA
-      setTimeout(() => {
-        if (email === 'admin@barber.com' && password === 'admin123') {
-          // Simpan token/tanda kalau udah login ke LocalStorage
-          localStorage.setItem('isAdminLoggedIn', 'true');
-          // Lempar ke halaman utama (Barbers)
-          window.location.href = '/'; 
-        } else {
-          setErrorMsg('Email atau password salah bes!');
-          setLoading(false);
-        }
-      }, 1000); // delay 1 detik biar ada efek loading
-      
-    } catch (error) {
-      setErrorMsg('Gagal koneksi ke server.');
+      // 🚀 NEMBAK API ASLI KE DATABASE
+      const response = await axios.post('http://localhost:3000/api/admin/login', { 
+        email, 
+        password 
+      });
+
+      if (response.data.success) {
+        const { role, name, region } = response.data.data;
+        
+        // Simpan data login dan role ke LocalStorage
+        localStorage.setItem('isAdminLoggedIn', 'true');
+        localStorage.setItem('adminRole', role); // Simpan role (superadmin/admin/cabang)
+        localStorage.setItem('adminName', name); // Simpan nama buat ditampilin di Header
+        localStorage.setItem('adminRegion', region || '');
+        // Lempar ke halaman utama (Dashboard/Barbers)
+        window.location.href = '/'; 
+      }
+    } catch (error: any) {
+      // Tangkap pesan error dari backend kalau salah password
+      if (error.response && error.response.data && error.response.data.error) {
+        setErrorMsg(error.response.data.error);
+      } else {
+        setErrorMsg('Gagal koneksi ke server. Cek backend lu bes!');
+      }
       setLoading(false);
     }
   };
@@ -68,7 +75,7 @@ export default function Login() {
                   type="email" required
                   value={email} onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm transition-all"
-                  placeholder="admin@barber.com"
+                  placeholder="super@barber.com"
                 />
               </div>
             </div>

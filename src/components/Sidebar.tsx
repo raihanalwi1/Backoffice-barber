@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Scissors, X } from 'lucide-react';
+import { LayoutDashboard, Users, Scissors, X, ShieldAlert } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -25,6 +25,9 @@ const SidebarItem = ({ to, icon: Icon, label, onClick }: { to: string; icon: any
 };
 
 export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
+  // 🛡️ AMBIL ROLE DARI LOCALSTORAGE
+  const userRole = localStorage.getItem('adminRole') || '';
+
   return (
     <>
       {isOpen && (
@@ -49,9 +52,22 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         </div>
         
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          {/* Menu yang tampil untuk semua role */}
           <SidebarItem to="/" icon={LayoutDashboard} label="Dashboard" onClick={() => setIsOpen(false)} />
           <SidebarItem to="/barbers" icon={Users} label="Data Kapster" onClick={() => setIsOpen(false)} />
-          <SidebarItem to="/services" icon={Scissors} label="Menu Layanan" onClick={() => setIsOpen(false)} />
+          
+          {/* 🛡️ MENU EKSKLUSIF: Sembunyikan dari admin cabang */}
+          {userRole !== 'cabang' && (
+            <SidebarItem to="/services" icon={Scissors} label="Menu Layanan" onClick={() => setIsOpen(false)} />
+          )}
+          {userRole === 'superadmin' && (
+            <SidebarItem 
+              to="/admins" 
+              icon={ShieldAlert} 
+              label="Manajemen Admin" 
+              onClick={() => setIsOpen(false)} 
+            />
+          )}
         </nav>
       </aside>
     </>

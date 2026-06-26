@@ -4,7 +4,9 @@ import { Menu, Bell, UserCircle, LogOut } from 'lucide-react'; // 📦 Tambahin 
 interface HeaderProps {
   onMenuClick: () => void;
 }
-
+// Di dalam komponen Header.tsx
+const adminName = localStorage.getItem('adminName');
+const adminRole = localStorage.getItem('adminRole');
 export default function Header({ onMenuClick }: HeaderProps) {
   
   // 🚪 FUNGSI LOGOUT SAKTI
@@ -43,7 +45,10 @@ export default function Header({ onMenuClick }: HeaderProps) {
 
         {/* Area Profil & Logout */}
         <div className="flex items-center space-x-4">
+          <p className="text-sm font-bold text-gray-800">{adminName}</p>
+            <p className="text-[10px] text-gray-400 uppercase font-bold">{adminRole}</p>
           <div className="h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center cursor-pointer border border-gray-200">
+            
             <UserCircle size={24} className="text-gray-500" />
           </div>
           

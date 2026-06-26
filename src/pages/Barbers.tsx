@@ -26,7 +26,8 @@ interface Barber {
   certificate_image: string;
   instagram: string;
   bank_account: string;
-  created_at?: string; // 📅 Tambahan patokan waktu join
+  region: string; // 📍 Tambahan field region
+  created_at?: string; 
 }
 
 export default function Barbers() {
@@ -41,6 +42,10 @@ export default function Barbers() {
   const [searchTerm, setSearchTerm] = useState('');
   const [itemsLimit, setItemsLimit] = useState<number>(10);
 
+  // 🛡️ AMBIL DATA LOGIN DARI LOCALSTORAGE
+  const userRole = localStorage.getItem('adminRole') || '';
+  const adminRegion = localStorage.getItem('adminRegion') || '';
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -51,12 +56,14 @@ export default function Barbers() {
     ktp_image: '',
     certificate_image: '',
     instagram: '',
-    bank_account: ''
+    bank_account: '',
+    region: userRole === 'cabang' ? adminRegion : 'Jaktim' // 📍 Auto-set region kalau yang login cabang
   });
 
   const fetchBarbers = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/api/barbers');
+      // 🚀 KIRIM ROLE & REGION KE BACKEND
+      const response = await axios.get(`http://localhost:3000/api/barbers?role=${userRole}&region=${adminRegion}`);
       const actualData = response.data.data ? response.data.data : response.data;
       setBarbers(actualData);
       setLoading(false);
@@ -70,15 +77,15 @@ export default function Barbers() {
     fetchBarbers();
     const interval = setInterval(() => fetchBarbers(), 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [userRole, adminRegion]); // Nambahin dependency biar rapi
 
   // ⚙️ FUNGSI SAKTI: NGITUNG PENGALAMAN OTOMATIS BERDASARKAN TAHUN DAFTAR
   const calculateExperience = (createdAt?: string) => {
-    if (!createdAt) return 0; // Kalau data lama belum punya created_at, anggap 0
+    if (!createdAt) return 0; 
     const joinYear = new Date(createdAt).getFullYear();
     const currentYear = new Date().getFullYear();
     const exp = currentYear - joinYear;
-    return exp > 0 ? exp : 0; // Ga boleh minus
+    return exp > 0 ? exp : 0; 
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
@@ -118,14 +125,15 @@ export default function Barbers() {
         name: formData.name.trim(),
         phone: formData.phone.trim(),
         email: formData.email.trim(),
-        experience: 0, // Sengaja kirim 0 biar ga ngerusak DB lama, karena sekarang dihitung otomatis
+        experience: 0, 
         status: formData.status,
         lat: Number(formData.lat),
         lng: Number(formData.lng),
         ktp_image: formData.ktp_image,
         certificate_image: formData.certificate_image,
         instagram: formData.instagram.trim(),
-        bank_account: formData.bank_account.trim()
+        bank_account: formData.bank_account.trim(),
+        region: formData.region // 📍 Jangan lupa kirim region-nya
       };
 
       if (editingId) {
@@ -168,7 +176,8 @@ export default function Barbers() {
       ktp_image: barber.ktp_image || '',
       certificate_image: barber.certificate_image || '',
       instagram: barber.instagram || '',
-      bank_account: barber.bank_account || ''
+      bank_account: barber.bank_account || '',
+      region: barber.region || 'Jaktim' // 📍 Set region pas mau diedit
     });
     setIsFormOpen(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -180,7 +189,8 @@ export default function Barbers() {
     setFormData({ 
       name: '', phone: '', email: '', status: 'Aktif', 
       lat: -6.225017, lng: 106.900447, 
-      ktp_image: '', certificate_image: '', instagram: '', bank_account: '' 
+      ktp_image: '', certificate_image: '', instagram: '', bank_account: '',
+      region: userRole === 'cabang' ? adminRegion : 'Jaktim' 
     });
   };
 
@@ -201,10 +211,10 @@ export default function Barbers() {
       <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
         <h2 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
           <MapPin className="mr-2 text-blue-600" size={20} />
-          Peta Persebaran Kapster Aktif
+          Peta Persebaran Kapster Aktif {userRole === 'cabang' && `(${adminRegion})`}
         </h2>
         <div className="h-[350px] w-full rounded-xl overflow-hidden border border-gray-300 relative z-0">
-          <MapContainer center={[-6.225017, 106.900447]} zoom={11} className="h-full w-full absolute inset-0">
+          <MapContainer center={[-6.225017, 106.900447]} zoom={userRole === 'cabang' ? 12 : 9} className="h-full w-full absolute inset-0">
             <TileLayer 
               attribution='© OpenStreetMap'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
@@ -216,6 +226,7 @@ export default function Barbers() {
                 <Popup>
                   <div className="text-center">
                     <p className="font-bold text-gray-800 text-sm mb-1">{barber.name}</p>
+                    <p className="text-[10px] text-blue-600 font-bold uppercase mb-1">📍 {barber.region}</p>
                     <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-700">Aktif</span>
                   </div>
                 </Popup>
@@ -229,7 +240,11 @@ export default function Barbers() {
       <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
         <div>
           <h1 className="text-2xl font-semibold text-gray-800">Daftar Kapster</h1>
-          <p className="text-gray-500 mt-1 text-sm">Kelola {filteredBarbers.length} data tukang cukur BarberOnCall.</p>
+          <p className="text-gray-500 mt-1 text-sm">
+            {userRole === 'cabang' 
+              ? `Kelola ${filteredBarbers.length} tim khusus Wilayah ${adminRegion}` 
+              : `Kelola ${filteredBarbers.length} tim seluruh cabang`}
+          </p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-3">
@@ -321,12 +336,31 @@ export default function Barbers() {
               {/* Kolom Kanan */}
               <div className="space-y-4">
                 <h3 className="text-md font-bold text-gray-700 border-b pb-2">Status & Dokumen</h3>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Status Kapster</label>
-                  <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm text-sm">
-                    <option value="Aktif">🟢 Aktif (Siap)</option>
-                    <option value="Nonaktif">🔴 Nonaktif (Cuti)</option>
-                  </select>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Status Kapster</label>
+                    <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} className="w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm text-sm">
+                      <option value="Aktif">🟢 Aktif (Siap)</option>
+                      <option value="Nonaktif">🔴 Nonaktif (Cuti)</option>
+                    </select>
+                  </div>
+
+                  {/* 📍 FILTER SELEKSI WILAYAH */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Wilayah / Cabang</label>
+                    <select 
+                      value={formData.region} 
+                      disabled={userRole === 'cabang'} // 🔒 Cabang dilarang pindah-pindah wilayah
+                      onChange={(e) => setFormData({...formData, region: e.target.value})} 
+                      className={`w-full border border-gray-300 rounded-xl p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm text-sm ${userRole === 'cabang' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                    >
+                      <option value="Jaktim">Jakarta Timur</option>
+                      <option value="Jaksel">Jakarta Selatan</option>
+                      <option value="Bogor">Bogor</option>
+                      <option value="Bandung">Bandung</option>
+                    </select>
+                  </div>
                 </div>
 
                 {/* Upload KTP */}
@@ -380,8 +414,8 @@ export default function Barbers() {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm">
-              <th className="p-4 font-medium w-1/3">Info Kapster</th>
-              <th className="p-4 font-medium w-1/3">Kontak & Info</th>
+              <th className="p-4 font-medium w-1/4">Info Kapster</th>
+              <th className="p-4 font-medium w-1/4">Kontak & Wilayah</th>
               <th className="p-4 font-medium text-center w-1/6">Status</th>
               <th className="p-4 font-medium text-center w-1/6">Aksi</th>
             </tr>
@@ -400,8 +434,11 @@ export default function Barbers() {
                   </td>
                   <td className="p-4">
                     <p className="text-gray-600 text-sm">{barber.phone}</p>
-                    {/* NGITUNG PENGALAMAN OTOMATIS */}
-                    <p className="text-gray-400 text-xs mt-1">{calculateExperience(barber.created_at)} Tahun Pengalaman</p>
+                    <div className="flex items-center space-x-2 mt-1">
+                      {/* 📍 Nampilin Badge Wilayah */}
+                      <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase">📍 {barber.region}</span>
+                      <span className="text-gray-400 text-xs">{calculateExperience(barber.created_at)} Thn Kerja</span>
+                    </div>
                   </td>
                   <td className="p-4 text-center">
                     <span className={`inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-medium ${barber.status === 'Aktif' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
@@ -412,7 +449,17 @@ export default function Barbers() {
                   <td className="p-4 flex justify-center space-x-2">
                     <button onClick={() => setDetailBarber(barber)} className="text-green-600 p-1.5 hover:bg-green-50 rounded" title="Lihat Detail Data"><Eye size={18} /></button>
                     <button onClick={() => openEditForm(barber)} className="text-blue-500 p-1.5 hover:bg-blue-50 rounded" title="Edit Data"><Edit size={18} /></button>
-                    <button onClick={() => handleDelete(barber.id, barber.name)} className="text-red-500 p-1.5 hover:bg-red-50 rounded" title="Hapus"><Trash2 size={18} /></button>
+                    
+                    {/* 🛡️ TOMBOL HAPUS: Cuma tampil buat superadmin & admin */}
+                    {userRole !== 'cabang' && (
+                      <button 
+                        onClick={() => handleDelete(barber.id, barber.name)} 
+                        className="text-red-500 p-1.5 hover:bg-red-50 rounded"
+                        title="Hapus Data"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))
@@ -437,10 +484,13 @@ export default function Barbers() {
                   <p className="font-semibold text-lg text-gray-800">{detailBarber.name}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Status Bekerja</p>
-                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${detailBarber.status === 'Aktif' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    {detailBarber.status}
-                  </span>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Status & Wilayah</p>
+                  <div className="flex items-center space-x-2">
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${detailBarber.status === 'Aktif' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {detailBarber.status}
+                    </span>
+                    <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full uppercase">📍 {detailBarber.region}</span>
+                  </div>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Email</p>
@@ -452,7 +502,6 @@ export default function Barbers() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">Pengalaman</p>
-                  {/* NGITUNG PENGALAMAN OTOMATIS DI MODAL */}
                   <p className="font-medium text-gray-800">{calculateExperience(detailBarber.created_at)} Tahun</p>
                 </div>
                 <div>
