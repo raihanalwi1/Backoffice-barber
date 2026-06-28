@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Users, UserCheck, Shield, MapPin, TrendingUp, Scissors, ShoppingBag, DollarSign } from 'lucide-react';
 
@@ -7,9 +7,10 @@ export default function Dashboard() {
     totalBarbers: 0,
     activeBarbers: 0,
     totalAdmins: 0,
+    totalCustomers: 0,
   });
   const [loading, setLoading] = useState(true);
-
+  // customers state removed because it's unused to avoid lint warning
   // 🛡️ AMBIL DATA LOGIN
   const adminName = localStorage.getItem('adminName') || 'Admin';
   const userRole = localStorage.getItem('adminRole') || '';
@@ -30,10 +31,17 @@ export default function Dashboard() {
           const adminRes = await axios.get(`http://localhost:3000/api/admins?role=${userRole}`);
           adminCount = adminRes.data.data ? adminRes.data.data.length : 0;
         }
-
+        let customerCount= 0;
+        if (userRole === 'superadmin') {
+          const userRes = await axios.get('http://localhost:3000/api/users');
+          if (userRes.data && userRes.data.success) {
+            customerCount = userRes.data.data.length;
+          }
+        }
         setStats({
           totalBarbers: barbers.length,
           activeBarbers: activeCount,
+          totalCustomers: customerCount,
           totalAdmins: adminCount
         });
         
@@ -138,10 +146,20 @@ export default function Dashboard() {
                 <span className="text-3xl font-bold text-gray-800 mt-2">{stats.totalAdmins} <span className="text-sm font-normal text-gray-400">Akun</span></span>
               </div>
             )}
-            
+            {userRole === 'superadmin' && (
+              <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col border-l-4 border-l-purple-500">
+                <span className="text-sm font-medium text-gray-500 flex items-center">
+                  <Users size={16} className="mr-1 text-purple-500" /> Total Akun Customer
+                </span>
+                <span className="text-3xl font-bold text-gray-800 mt-2">
+                  {stats.totalCustomers} <span className="text-sm font-normal text-gray-400">Akun</span>
+                </span>
+              </div>
+            )}
           </div>
         )}
       </div>
+      
 
     </div>
   );
