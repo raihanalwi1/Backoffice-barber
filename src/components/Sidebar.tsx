@@ -68,7 +68,17 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
               onClick={() => setIsOpen(false)} 
             />
           )}
+          
+          {userRole === 'superadmin' && (
+            <SidebarItem 
+              to="/costumers" 
+              icon={ShieldAlert} 
+              label="Data Pelanggan" 
+              onClick={() => setIsOpen(false)} 
+            />
+          )}
         </nav>
+        
       </aside>
     </>
   );

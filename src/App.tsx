@@ -7,6 +7,7 @@ import Barbers from './pages/Barbers';
 import Admins from './pages/Admins';
 // import LaporanKeuangan from './pages/LaporanKeuangan';
 import Login from './pages/Login'; // <-- IMPORT HALAMAN LOGIN
+import Costumers from './pages/Costumers';
 
 // 🛡️ POS SATPAM: Cek token login di LocalStorage
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
@@ -46,6 +47,7 @@ export default function App() {
                   <Route path="/barbers" element={<Barbers />} />
                   <Route path="/services" element={<ProtectedRoute><RoleGuard allowedRoles={['superadmin']}><Services /></RoleGuard></ProtectedRoute>} />
                   <Route path="/admins" element={<ProtectedRoute><RoleGuard allowedRoles={['superadmin']}><Admins /></RoleGuard></ProtectedRoute>} />
+                  <Route path="/costumers" element={<ProtectedRoute><RoleGuard allowedRoles={['superadmin']}><Costumers /></RoleGuard></ProtectedRoute>} />
                 </Routes>
               </AdminLayout>
             </ProtectedRoute>
